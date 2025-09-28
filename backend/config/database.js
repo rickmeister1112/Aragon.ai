@@ -1,16 +1,65 @@
-const mysql = require('mysql2');
-require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
+const logger = require('./logger');
 
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'aragon_tasks',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-};
+// Create Prisma client instance
+const prisma = new PrismaClient({
+  log: [
+    {
+      emit: 'event',
+      level: 'query',
+    },
+    {
+      emit: 'event',
+      level: 'error',
+    },
+    {
+      emit: 'event',
+      level: 'info',
+    },
+    {
+      emit: 'event',
+      level: 'warn',
+    },
+  ],
+});
 
-const pool = mysql.createPool(dbConfig);
+// Log database queries in development
+if (process.env.NODE_ENV === 'development') {
+  prisma.$on('query', (e) => {
+    logger.info('Query: ' + e.query);
+    logger.info('Params: ' + e.params);
+    logger.info('Duration: ' + e.duration + 'ms');
+  });
+}
 
-module.exports = pool.promise();
+// Log database errors
+prisma.$on('error', (e) => {
+  logger.error('Database error:', e);
+});
+
+// Log database info
+prisma.$on('info', (e) => {
+  logger.info('Database info:', e);
+});
+
+// Log database warnings
+prisma.$on('warn', (e) => {
+  logger.warn('Database warning:', e);
+});
+
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
+
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+module.exports = prisma;

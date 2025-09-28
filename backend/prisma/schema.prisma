@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Board {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  statuses BoardStatus[]
+  tasks    Task[]
+
+  @@map("boards")
+}
+
+model BoardStatus {
+  id          Int      @id @default(autoincrement())
+  boardId     Int      @map("board_id")
+  statusKey   String   @db.VarChar(50) @map("status_key")
+  statusLabel String   @db.VarChar(100) @map("status_label")
+  statusColor String   @default("#6b7280") @db.VarChar(7) @map("status_color")
+  position    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@unique([boardId, statusKey], map: "unique_board_status")
+  @@map("board_statuses")
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  boardId     Int      @map("board_id")
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  statusKey   String   @db.VarChar(50) @map("status_key")
+  priority    Priority @default(MEDIUM)
+  position    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardStatus BoardStatus  @relation(fields: [boardId, statusKey], references: [boardId, statusKey], onDelete: Cascade)
+
+  @@map("tasks")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
