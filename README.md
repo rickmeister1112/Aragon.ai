@@ -1,6 +1,6 @@
 # Aragon.ai - Task Management System
 
-A full-stack task management application built with React, Node.js, Express, and MySQL featuring dynamic statuses, drag-and-drop functionality, and a modern dark theme.
+A full-stack task management application built with React, Node.js, Express, and PostgreSQL featuring dynamic statuses, drag-and-drop functionality, and a modern dark theme.
 
 ## Features
 
@@ -18,9 +18,11 @@ A full-stack task management application built with React, Node.js, Express, and
 ## Tech Stack
 
 - **Frontend**: React.js with custom components, react-beautiful-dnd
-- **Backend**: Node.js with Express
-- **Database**: MySQL with dynamic status management
-- **API**: RESTful API with proper error handling
+- **Backend**: Node.js with Express, Prisma ORM
+- **Database**: PostgreSQL with dynamic status management
+- **API**: RESTful API with proper error handling, validation, and logging
+- **Security**: Helmet, CORS, rate limiting
+- **Monitoring**: Winston logging, performance monitoring
 
 ## Project Structure
 
@@ -28,13 +30,17 @@ A full-stack task management application built with React, Node.js, Express, and
 Aragon/
 ├── backend/
 │   ├── config/
-│   │   └── database.js
-│   ├── database/
-│   │   └── schema.sql
+│   │   ├── database.js
+│   │   └── logger.js
+│   ├── middleware/
+│   │   └── monitoring.js
+│   ├── prisma/
+│   │   └── schema.prisma
 │   ├── routes/
 │   │   ├── boards.js
 │   │   ├── tasks.js
 │   │   └── statuses.js
+│   ├── logs/
 │   ├── package.json
 │   └── server.js
 ├── frontend/
@@ -42,7 +48,6 @@ Aragon/
 │   │   ├── components/
 │   │   │   ├── BoardList.js
 │   │   │   ├── BoardItem.js
-│   │   │   ├── BoardForm.js
 │   │   │   ├── TaskBoard.js
 │   │   │   ├── TaskColumn.js
 │   │   │   ├── TaskItem.js
@@ -62,29 +67,26 @@ Aragon/
 ### Prerequisites
 
 - Node.js (v14 or higher)
-- MySQL (v8 or higher)
+- PostgreSQL (v12 or higher)
 - npm or yarn
 
 ### Database Setup
 
-1. Create a MySQL database:
+1. Create a PostgreSQL database:
 ```sql
 CREATE DATABASE aragon_tasks;
 ```
 
-2. Update the database configuration in `backend/config/database.js`:
+2. Update the database connection string in `backend/config/database.js`:
 ```javascript
-const dbConfig = {
-  host: 'localhost',
-  user: 'your_username',
-  password: 'your_password',
-  database: 'aragon_tasks'
-};
+const DATABASE_URL = "postgresql://username:password@localhost:5432/aragon_tasks";
 ```
 
-3. Run the schema file to create tables and insert sample data:
+3. Generate Prisma client and push schema:
 ```bash
-mysql -u your_username -p aragon_tasks < backend/database/schema.sql
+cd backend
+npx prisma generate
+npx prisma db push
 ```
 
 ### Installation
@@ -108,6 +110,13 @@ npm install
 
 ### Running the Application
 
+1. Start both backend and frontend servers:
+```bash
+npm run dev
+```
+
+Or start them separately:
+
 1. Start the backend server:
 ```bash
 cd backend
@@ -123,6 +132,7 @@ npm start
 The application will be available at:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5001
+- Health Check: http://localhost:5001/health
 
 ## API Endpoints
 
@@ -179,17 +189,48 @@ The application will be available at:
 
 ## Database Schema
 
-The application uses a dynamic status system with the following key tables:
-- `boards`: Store board information
-- `board_statuses`: Store custom statuses for each board
-- `tasks`: Store tasks with references to boards and statuses
+The application uses Prisma ORM with PostgreSQL and a dynamic status system:
+
+### Models
+- **Board**: Store board information with title, description, and timestamps
+- **BoardStatus**: Store custom statuses for each board with position, color, and labels
+- **Task**: Store tasks with references to boards and statuses, including priority enum
+
+### Key Features
+- Foreign key relationships with cascade deletes
+- Enum support for task priorities (LOW, MEDIUM, HIGH)
+- Automatic timestamps (createdAt, updatedAt)
+- Position-based ordering for statuses and tasks
+
+## Development Features
+
+- **Structured Logging**: Winston logger with different log levels
+- **Performance Monitoring**: Request timing and performance metrics
+- **Security**: Helmet for security headers, rate limiting
+- **Error Handling**: Comprehensive error handling with user-friendly messages
+- **Validation**: Input validation on both frontend and backend
+- **Database Optimization**: Prisma ORM with optimized queries
 
 ## Future Enhancements
 
-- User authentication
-- Real-time updates
-- File attachments
+- User authentication and authorization
+- Real-time updates with WebSockets
+- File attachments for tasks
 - Due dates and reminders
 - Team collaboration features
 - Board templates
 - Export/import functionality
+- Advanced filtering and search
+- Mobile app development
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
