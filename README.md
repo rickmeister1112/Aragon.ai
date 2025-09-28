@@ -1,23 +1,25 @@
-# Aragon Task Manager
+# Aragon.ai - Task Management System
 
-A full-stack task management application built with React, Node.js, Express, and MySQL.
+A full-stack task management application built with React, Node.js, Express, and MySQL featuring dynamic statuses, drag-and-drop functionality, and a modern dark theme.
 
 ## Features
 
 - **CRUD Operations**: Create, read, update, and delete boards and tasks
-- **Form Validations**: Frontend form validations for creating and editing
+- **Dynamic Status Management**: Add, edit, and delete custom task statuses/columns
+- **Drag & Drop**: Intuitive drag-and-drop task management with react-beautiful-dnd
+- **Form Validations**: Frontend and backend form validations
 - **State Management**: React hooks for state management
 - **Interactive Elements**: Hover states and smooth transitions
 - **Responsive Design**: Works on desktop and mobile devices
-- **Task Status Management**: Move tasks between To Do, In Progress, and Done columns
+- **Dark Theme**: Modern dark theme with purple/blue/green accents
 - **Priority System**: Set task priorities (Low, Medium, High)
-- **Modern UI**: Clean and intuitive user interface
+- **Board Management**: Edit board columns and delete boards with confirmation
 
 ## Tech Stack
 
-- **Frontend**: React.js with custom components
+- **Frontend**: React.js with custom components, react-beautiful-dnd
 - **Backend**: Node.js with Express
-- **Database**: MySQL
+- **Database**: MySQL with dynamic status management
 - **API**: RESTful API with proper error handling
 
 ## Project Structure
@@ -31,7 +33,8 @@ Aragon/
 │   │   └── schema.sql
 │   ├── routes/
 │   │   ├── boards.js
-│   │   └── tasks.js
+│   │   ├── tasks.js
+│   │   └── statuses.js
 │   ├── package.json
 │   └── server.js
 ├── frontend/
@@ -117,14 +120,9 @@ cd frontend
 npm start
 ```
 
-3. Or run both simultaneously from the root directory:
-```bash
-npm run dev
-```
-
 The application will be available at:
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
+- Backend API: http://localhost:5001
 
 ## API Endpoints
 
@@ -143,12 +141,20 @@ The application will be available at:
 - `PUT /api/tasks/:id` - Update task
 - `DELETE /api/tasks/:id` - Delete task
 
+### Statuses
+- `GET /api/statuses/board/:boardId` - Get statuses for specific board
+- `POST /api/statuses` - Create new status
+- `PUT /api/statuses/:id` - Update status
+- `DELETE /api/statuses/:id` - Delete status
+
 ## Usage
 
 1. **Create a Board**: Click "New Board" in the sidebar to create a new task board
 2. **Add Tasks**: Select a board and click "Add Task" to create new tasks
-3. **Manage Tasks**: Edit, delete, or change the status of tasks using the dropdown
-4. **Organize**: Tasks are automatically organized into To Do, In Progress, and Done columns
+3. **Manage Columns**: Use the three-dots menu (⋯) → "Edit Board" to add/remove columns
+4. **Drag & Drop**: Drag tasks between columns to change their status
+5. **Edit Tasks**: Click on tasks to edit them or use the status dropdown
+6. **Delete Board**: Use the three-dots menu → "Delete Board" with confirmation
 
 ## Features Implemented
 
@@ -162,19 +168,28 @@ The application will be available at:
 - Backend API integration
 - Well-structured database design
 
-✅ **Additional Features**
-- Task status management
-- Priority system
-- Modern UI with smooth transitions
-- Error handling
-- Loading states
+✅ **Advanced Features**
+- Dynamic status/column management
+- Drag and drop functionality
+- Dark theme with modern UI
+- Board management (edit columns, delete boards)
+- Task priority system
+- Error handling and loading states
 - Confirmation dialogs for destructive actions
+
+## Database Schema
+
+The application uses a dynamic status system with the following key tables:
+- `boards`: Store board information
+- `board_statuses`: Store custom statuses for each board
+- `tasks`: Store tasks with references to boards and statuses
 
 ## Future Enhancements
 
-- Drag and drop functionality
 - User authentication
 - Real-time updates
 - File attachments
 - Due dates and reminders
 - Team collaboration features
+- Board templates
+- Export/import functionality
