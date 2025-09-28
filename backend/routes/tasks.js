@@ -8,7 +8,7 @@ const router = express.Router();
 const createTaskValidation = [
   body('title').trim().isLength({ min: 1, max: 255 }).withMessage('Title is required and must be less than 255 characters'),
   body('description').optional().trim().isLength({ max: 1000 }).withMessage('Description must be less than 1000 characters'),
-  body('status').optional().isIn(['todo', 'in_progress', 'done']).withMessage('Status must be todo, in_progress, or done'),
+  body('status_key').optional().trim().isLength({ min: 1, max: 50 }).withMessage('Status key must be less than 50 characters'),
   body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Priority must be low, medium, or high'),
   body('board_id').isInt().withMessage('Board ID must be a valid integer')
 ];
@@ -17,7 +17,7 @@ const createTaskValidation = [
 const updateTaskValidation = [
   body('title').optional().trim().isLength({ min: 1, max: 255 }).withMessage('Title must be less than 255 characters'),
   body('description').optional().trim().isLength({ max: 1000 }).withMessage('Description must be less than 1000 characters'),
-  body('status').optional().isIn(['todo', 'in_progress', 'done']).withMessage('Status must be todo, in_progress, or done'),
+  body('status_key').optional().trim().isLength({ min: 1, max: 50 }).withMessage('Status key must be less than 50 characters'),
   body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Priority must be low, medium, or high'),
   body('position').optional().isInt().withMessage('Position must be a valid integer')
 ];
@@ -81,7 +81,7 @@ router.post('/', createTaskValidation, async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description, status, priority, board_id } = req.body;
+    const { title, description, status_key, priority, board_id } = req.body;
     
     // Get the next position for this board
     const [positionResult] = await db.execute(
@@ -91,8 +91,8 @@ router.post('/', createTaskValidation, async (req, res) => {
     const position = positionResult[0].next_position;
 
     const [result] = await db.execute(
-      'INSERT INTO tasks (title, description, status, priority, board_id, position) VALUES (?, ?, ?, ?, ?, ?)',
-      [title, description, status || 'todo', priority || 'medium', board_id, position]
+      'INSERT INTO tasks (title, description, status_key, priority, board_id, position) VALUES (?, ?, ?, ?, ?, ?)',
+      [title, description, status_key || 'todo', priority || 'medium', board_id, position]
     );
 
     const [newTask] = await db.execute('SELECT * FROM tasks WHERE id = ?', [result.insertId]);
@@ -111,35 +111,39 @@ router.put('/:id', updateTaskValidation, async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description, status, priority, position } = req.body;
+    const { title, description, status_key, priority, position } = req.body;
     const updateFields = [];
     const updateValues = [];
 
-    if (title !== undefined) {
+    if (title !== undefined && title !== null) {
       updateFields.push('title = ?');
       updateValues.push(title);
     }
-    if (description !== undefined) {
+    if (description !== undefined && description !== null) {
       updateFields.push('description = ?');
       updateValues.push(description);
     }
-    if (status !== undefined) {
-      updateFields.push('status = ?');
-      updateValues.push(status);
+    if (status_key !== undefined && status_key !== null) {
+      updateFields.push('status_key = ?');
+      updateValues.push(status_key);
     }
-    if (priority !== undefined) {
+    if (priority !== undefined && priority !== null) {
       updateFields.push('priority = ?');
       updateValues.push(priority);
     }
-    if (position !== undefined) {
+    if (position !== undefined && position !== null) {
       updateFields.push('position = ?');
       updateValues.push(position);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
     }
 
     updateValues.push(req.params.id);
 
     const [result] = await db.execute(
-      `UPDATE tasks SET ${updateFields.join(', ')} WHERE id = ?`,
+      `UPDATE tasks SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       updateValues
     );
 
